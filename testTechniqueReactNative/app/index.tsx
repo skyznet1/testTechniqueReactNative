@@ -14,9 +14,14 @@ interface Slot{
     end: Date;
 }
 
+interface SlotState{
+    [key: string]: number;
+}
+
 const Index: React.FC = () => {
-    const [todayDate, setTodayDate] = useState(new Date());
-    const [hoveredSlot, setHoveredSlot] = useState<string | null>(null);
+    const [todayDate, setTodayDate] = useState(new Date())
+    const [hoveredSlot, setHoveredSlot] = useState<string | null>(null)
+    const [slotStates, setSlotStates] = useState<SlotState>({})
 
     useEffect(() => {
         const fetchDays = () => {
@@ -84,6 +89,13 @@ const Index: React.FC = () => {
 
     const canPrevious = todayDate.toDateString() !== new Date().toDateString()
 
+    const handleSlotPress = (slotId: string) => {
+        setSlotStates(prevStates => {
+            const currentCount = prevStates[slotId] || 0;
+            const newCount = (currentCount + 1) % 4;
+            return { ...prevStates, [slotId]: newCount };
+        })
+    }
 
     return (
         <View style={styles.container}>
@@ -97,9 +109,22 @@ const Index: React.FC = () => {
                     <View style={styles.slotsContainer}>
                         {item.slots.map((slot, index) =>{
                             const slotId = `${item.date}-${index}`
+                            const slotClickCount = slotStates[slotId] || 0;
+                            const slotStyle = [
+                                styles.slot,
+                                slotClickCount === 1 && styles.slotHover,
+                                slotClickCount === 2 && styles.slotGreen,
+                                slotClickCount === 3 && styles.slotBlue,
+                                slotClickCount === 4 && styles.slotInitial
+                            ];
+                            const slotTextStyle = [
+                                styles.slotText,
+                                slotClickCount === 1 && styles.slotTextHover,
+                                slotClickCount === 2 && styles.slotTextHover,
+                            ];
                             return(
-                                <TouchableOpacity  key={index} style={[styles.slot, hoveredSlot === slotId && styles.slotHover]} onPressIn={() => setHoveredSlot(slotId)} >
-                                    <Text style={[styles.slotText, hoveredSlot === slotId && styles.slotTextHover]}>
+                                <TouchableOpacity  key={index} style={slotStyle} onPress={() => handleSlotPress(slotId)}>
+                                    <Text style={slotTextStyle}>
                                         {slot.start.getHours()}:{slot.start.getMinutes() === 0 ? '00' : slot.start.getMinutes()} - {slot.end.getHours()}:{slot.end.getMinutes() === 0 ? '00' : slot.end.getMinutes()}
                                     </Text>
                                 </TouchableOpacity>
@@ -165,6 +190,15 @@ const styles = StyleSheet.create({
     },
     slotTextHover: {
         color: '#fff',
+    },
+    slotGreen: {
+        backgroundColor: '#4caf50',
+    },
+    slotBlue: {
+        backgroundColor: '#2196F3',
+    },
+    slotInitial: {
+        backgroundColor: '#ddd',
     }
 
 })
